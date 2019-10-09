@@ -7,8 +7,8 @@ import atexit, os
 from colorama import Fore, Back, Style
 
 pi=3.141952
-speedcap = 7
-runoffset = 8 * 36000#18000
+speedcap = 30 #35 is recommended max speed for 6SE 6th gen mount.
+refreshrate = .5
 
 comport = "COM4" #TODO Auto-detect port
 ser = serial.Serial(comport)
@@ -31,25 +31,24 @@ home.lon = '151.2218624'
 home.lat = '-33.7805312'
 home.elevation = 40
 
-TLE1 = 'COSMOS 1626'
-TLE2 = "1 15494U 85009A   19281.68062771 +.00000615 +00000-0 +24157-4 0  9998"
-TLE3 = "2 15494 082.4770 124.8092 0002321 018.7503 341.3818 15.23809320896881"
+TLE1 = 'COSMOS 2058'
+TLE2 = "1 20465U 90010A   19282.14924744  .00000184  00000-0  13301-4 0  9999"
+TLE3 = "2 20465  82.4897 156.1243 0014919 336.9664  23.0887 14.97914373611666"
 
-
-iss = ephem.readtle(str(TLE1), str(TLE2), str(TLE3))
+sat = ephem.readtle(str(TLE1), str(TLE2), str(TLE3))
 
 def AltAzi(y, m, d, h, mi, s): #x=0-360 y=-90-90
 	home.date = int(y), int(m), int(d), int(h), int(mi), int(s)
-	iss.compute(home)
-	alt = iss.alt * degrees_per_radian
-	azi = iss.az * degrees_per_radian
+	sat.compute(home)
+	alt = sat.alt * degrees_per_radian
+	azi = sat.az * degrees_per_radian
 	return alt, azi
 
-def AltAziNow(): #Get te cuurent alt azi of the ISS at current time
+def AltAziNow(): #Get te cuurent alt azi of the sat at current time
 	home.date = datetime.utcnow()
-	iss.compute(home)
-	alt = iss.alt * degrees_per_radian
-	azi = iss.az * degrees_per_radian
+	sat.compute(home)
+	alt = sat.alt * degrees_per_radian
+	azi = sat.az * degrees_per_radian
 	return alt, azi
 
 def setTimeNow(): #QRSTUVWX
@@ -177,35 +176,10 @@ def debugFlag(state, msg):
 	else:
 		print("ERROR! \t" + str(msg))
 
-def slewspeed(var):
-	var = abs(var)
-	if var <= .005: 	
-		return 1
-	elif var <= 0.01:	
-		return 2
-	elif var <= 0.04:
-		return 3
-	elif var <= 0.08:
-		return 4
-	elif var <= 0.16:
-		return 5
-	elif var <= 0.64:
-		return 6
-	elif var <= 1:
-		return 7
-	elif var <= 3:
-		return 8
-	elif var <= 5:
-		return 9
-	else:
-		return 10
-
-	return "ERROR"
-
 os.system("cls")
 
 #if not testTLEAge(TLE2):
-#	print("TLE data is more than a week old and may not be accurate!!") 
+#	print("TLE data is more than a week old and may not be accurate!!") TODO Fix this
 
 print(" ")
 print("Location: \t " + str(home.lon) + " " + str(home.lat))
@@ -249,18 +223,15 @@ b = time.time()
 a = time.time()
 
 while 1:
-	timelag = b-a-1
+	timelag = abs(b-a-1)
 	a = time.time()
 	os.system("cls")
 	
 	y, x = getAltAziTelescope()
-		
-	#y += riseoffset
-	#x += runoffset
 	
-	y1, x1 = AltAzi(datetime.utcnow().year, datetime.utcnow().month, datetime.utcnow().day, datetime.utcnow().hour, datetime.utcnow().minute, datetime.utcnow().second+1+timelag)
+	y1, x1 = AltAzi(datetime.utcnow().year, datetime.utcnow().month, datetime.utcnow().day, datetime.utcnow().hour, datetime.utcnow().minute, datetime.utcnow().second+refreshrate+timelag)
 	
-	#fixing telescope map to match iss map
+	#fixing telescope map to match telescope map
 	if y > 90 and y < 180:
 		y = 90-(y-90)
 	if y > 270:
@@ -271,8 +242,8 @@ while 1:
 	rise = y - y1
 	run = x - x1
 
-	speedrise = abs(round(rise,2))#slewspeed(rise)		#abs(round(rise * 2 * riseoffset))
-	speedrun = abs(round(run,2))#slewspeed(run)		#abs(round(run * 2 * runoffset))
+	speedrise = abs(round(rise,2))
+	speedrun = abs(round(run,2))
 	
 	#speed limit
 	if speedrise >= speedcap:
@@ -280,36 +251,15 @@ while 1:
 	if speedrun >= speedcap:
 		speedrun = speedcap
 	
-	deviation = ((abs(run) + abs(rise)) / 2)
-	
-	if deviation < 0.1:
-		deviationMark = "low"
-	if deviation < .5:
-		deviationMark = "moderate"
-	elif deviation < .8:
-		deviationMark = "fairly high"
-	elif deviation < 1:
-		deviationMark = "high"
-	elif deviation < 1.5:
-		deviationMark = "very high"
-	else:
-		deviationMark = "too much"
-	
-	
 	print(Fore.WHITE, " ")
-	print("Tracking satelite with " + deviationMark + " (" + str(round(deviation,2)) + ") " + "deviation...")
-	print(" ")
 	print("TARGET: \t " + str(TLE1))
 	print(" ")
 	print("Current: \t " + str(round(x,2)) + " \t " + str(round(y,2)))
 	print("Target: \t " + str(round(x1,2)) + " \t " + str(round(y1,2)))
-	print("Deviation: \t " + str(round(x - x1,2)) + " \t\t " + str(round(y-y1,2)))
 	print(" ")
 	print("X Axis Speed: \t " + str(speedrun))
 	print("Y Axis Speed: \t " + str(speedrise))
 	print("Time Delay: \t " + str(round(timelag,2)))
-	
-	
 	
 	#Track ISS
 	if rise>0:	#Down
@@ -333,49 +283,6 @@ while 1:
 		else:		#Left
 			azmPos(0)
 			azmNeg(speedrun)
-			
-	'''
-	if keyboard.is_pressed('w'):
-		riseoffset += offsetsize
-	elif keyboard.is_pressed('s'):
-		riseoffset -= offsetsize
-		
-	if keyboard.is_pressed('d'):
-		runoffset += offsetsize
-	elif keyboard.is_pressed('a'):
-		runoffset -= offsetsize
-	
-	if keyboard.is_pressed('q'):
-		break
-	
-	print(" ")
-	print("Run off-set: \t" + str(runoffset))
-	print("Rise off-set: \t" + str(riseoffset))
-	'''
-	
-	time.sleep(1)
+
+	time.sleep(refreshrate)
 	b = time.time()
-
-'''
-azmNeg(0)
-azmPos(0)
-altNeg(0)
-altPos(0)
-
-north = input("Point North? (y/n): ")
-
-if north == "y" or north == "yes" or north == "Y" or north == "YES" or north == "true" or north == "1":
-	north = True
-	gotoAltAzi(0,0)
-	ser.close()
-else:
-	north = False
-	ser.close()
-	
-os.system("cls")
-print("Bye!")
-'''
-
-
-
-
