@@ -211,10 +211,10 @@ try:
 except:
 	print("Connection failed...")
 	
-#time.sleep(5)
+time.sleep(1)
 print(" ")
 print(Fore.GREEN + "Please keep an eye on your telescope at all times!")
-#time.sleep(5)
+time.sleep(1)
 
 riseoffset = 1
 runoffset = 1
