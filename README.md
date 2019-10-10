@@ -13,9 +13,9 @@ colorama, atexit, ephem, serial, and keyboard.
 First, align the telescope and attach handcontrol to pc with usb cable and note the com port,
 then inside the script add the tle data of the satelite you want to track (default is ISS).
 Finally with python 3.7.* ->, just use:
-'''
+```
 python SatTrack.py
-'''
+```
 in a terminal.
 
 ## Contributing
