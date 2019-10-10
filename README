@@ -1,10 +1,1 @@
-First project, woo!
-
-Only works with nexstar SE series!!!
-Inside main/ there should be a python script called Sat Track.py, 
-to use the script, align the telescope (or point directly north) and
-plug the hand control into the telescope. 
-Then you'll need to change the com port that you have connected with and if
-needed, change the tle data.
-
-Then just run it with python 3.7.*.
+$hi?
