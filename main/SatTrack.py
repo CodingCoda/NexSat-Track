@@ -7,12 +7,19 @@ import atexit, os
 from colorama import Fore, Back, Style
 
 pi=3.141952
-speedcap = 15 #35 is recommended max speed for 6SE 6th gen mount.
-refreshrate = .5
-daylightsaving = 0#-1 #	-1 is on, 0 is off. NOTE: might be broken so leave at 0
-timechange = [0,0,0,0] # change time by date, hour, minute, second
-comport = "COM4" #TODO Auto-detect port
-ser = serial.Serial(comport)
+speedcap = 15 			# Stops the program from damaging the telescope, max is around 35 but can be different for your telescope. Expiriment first with low numbers to find your max.
+refreshrate = .5		# The script predict and 'chops' up the satelites path to slew to. Lower refresh rates give smoother look but make the telescope a bit slower.
+daylightsaving = 0 		# -1 is on, 0 is off. 
+timechange = [0,0,0,0] 		# change time by date, hour, minute, second forwards or backwards
+comport = "COM4" 		# Com port of the telescope
+
+degrees_per_radian = 180.0 / math.pi
+home = ephem.Observer()
+
+home.lon = '0'			# Make sure to change to your location...
+home.lat = '0'
+home.elevation = 0
+
 
 try:
 	ser.open()
@@ -23,14 +30,6 @@ except:
 	except:
 		print("Cannot open port!")
 		quit()
-
-
-degrees_per_radian = 180.0 / math.pi
-home = ephem.Observer()
-
-home.lon = '151.2218624'
-home.lat = '-33.7805312'
-home.elevation = 40
 
 TLE1 = 'SL-16 R/B'
 TLE2 = "1 26070U 00006B   19285.55197995 +.00000105 +00000-0 +78122-4 0  9996"
